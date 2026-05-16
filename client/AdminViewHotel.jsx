@@ -12,11 +12,11 @@ import {
   faLocationDot,
 } from "@fortawesome/free-solid-svg-icons";
 import { useContext, useState } from "react";
-import useFetch from "../components/hooks/useFetch";
+import useFetch from "./src/components/hooks/useFetch";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { SearchContext } from "../context/SearchContext";
-import { UserContext } from "../context/userContext";
-import Reserve from "../components/Reserve";
+import { SearchContext } from "./src/context/SearchContext";
+import { UserContext } from "./src/context/userContext";
+import Reserve from "./src/components/Reserve";
 
 export default function AdminViewHotel() {
     const location = useLocation();

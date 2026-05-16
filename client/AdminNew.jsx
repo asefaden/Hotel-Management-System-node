@@ -1,6 +1,6 @@
 import "./adminnew.scss";
-import AdminSidebar from "../components/AdminSidebar";
-import AdminNavbar from "../components/AdminNavbar";
+import AdminSidebar from "./src/components/AdminSidebar";
+import AdminNavbar from "./src/components/AdminNavbar";
 import DriveFolderUploadOutlinedIcon from "@mui/icons-material/DriveFolderUploadOutlined";
 import { useState } from "react";
 import axios from "axios";
@@ -19,7 +19,7 @@ const AdminNew = ({ inputs, title }) => {
     data.append("file", file);
     data.append("upload_preset", "upload");
     try {
-      // Fixed empty upload URL to use environment variable or fallback
+      // Use environment variable for image upload service
       const uploadRes = await axios.post(
         import.meta.env.VITE_UPLOAD_URL || "https://api.cloudinary.com/v1_1/your_cloud_name/image/upload",
         data
@@ -32,7 +32,7 @@ const AdminNew = ({ inputs, title }) => {
         img: url,
       };
 
-      // Fixed endpoint to match the backend route defined in authRoutes.js
+      // Fixed endpoint to match the backend route (/register instead of /auth/register)
       await axios.post("/register", newUser);
     } catch (err) {
       console.log(err);

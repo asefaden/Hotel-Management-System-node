@@ -2,7 +2,7 @@ import "./admindatatable.scss";
 import { DataGrid } from "@mui/x-data-grid";
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import useFetch from "./hooks/useFetch";
+import useFetch from "./src/src/components/hooks/useFetch";
 import axios from "axios";
 import toast from "react-hot-toast";
 
