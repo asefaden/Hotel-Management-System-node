@@ -1,6 +1,6 @@
 import "./adminnew.scss";
-import AdminSidebar from "./src/components/AdminSidebar";
-import AdminNavbar from "./src/components/AdminNavbar";
+import AdminSidebar from "../components/AdminSidebar";
+import AdminNavbar from "../components/AdminNavbar";
 import DriveFolderUploadOutlinedIcon from "@mui/icons-material/DriveFolderUploadOutlined";
 import { useState } from "react";
 import axios from "axios";
@@ -32,8 +32,8 @@ const AdminNew = ({ inputs, title }) => {
         img: url,
       };
 
-      // Fixed endpoint to match the backend route (/register instead of /auth/register)
-      await axios.post("/register", newUser);
+      // Assuming this AdminNew component is for creating new admin users
+      await axios.post("/admin/register", newUser); // Corrected endpoint
     } catch (err) {
       console.log(err);
     }

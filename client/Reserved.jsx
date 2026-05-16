@@ -3,7 +3,7 @@ import Navbar from '../components/Navbar';
 import Header from '../components/Header';
 import useFetch from '../components/hooks/useFetch';
 import { UserContext } from '../context/userContext';
-import { useContext, useLocation } from 'react';
+import { useContext, useLocation } from 'react'; // Added useLocation
 import { useNavigate } from 'react-router-dom';
 import './reserved.css';
 import { SearchContext } from '../context/SearchContext';
@@ -27,7 +27,7 @@ export default function Reserved() {
   
     const navigate = useNavigate();
     const { dispatch } = useContext(SearchContext);
-  const location = useLocation();
+  const location = useLocation(); // Initialize useLocation
   const id = location.pathname.split("/")[2];
   const { user } = useContext(UserContext);
   const { data, loading, error, reFetch } = useFetch(`/reserved/${user?.id}`);

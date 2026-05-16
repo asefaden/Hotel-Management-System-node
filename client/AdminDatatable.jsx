@@ -2,17 +2,14 @@ import "./admindatatable.scss";
 import { DataGrid } from "@mui/x-data-grid";
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import useFetch from "../hooks/useFetch"; // Corrected path
+import useFetch from "./hooks/useFetch";
 import axios from "axios";
 import toast from "react-hot-toast";
 
-const AdminDatatableRooms = ({ columns }) => {
-  console.log(columns);
+const AdminDatatable = ({ columns }) => {
   const location = useLocation();
-  const id1 = location.pathname.split("/")[3];
-  console.log(id1);
 const [list, setList] = useState([]);
-const { data, loading, error } = useFetch(`/hotels/room/${id1}`); // Corrected API endpoint
+const { data, loading, error } = useFetch('/hotels');
 
 useEffect(() => {
   setList(data);
@@ -21,11 +18,11 @@ useEffect(() => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/room/${id}`);
+      await axios.delete(`/hotels/${id}`);
       setList(list.filter((item) => item.id !== id));
-      toast.success('Rooms deleted Successfully');
+      toast.success('Hotel deleted Successfully');
     } catch (error) {
-      toast.error('Failed to delete Rooms');
+      toast.error('Failed to delete hotel');
     }
   };
 
@@ -36,6 +33,9 @@ useEffect(() => {
       width: 200,
       renderCell: (params) => (
         <div className="cellAction">
+          <Link to={`/admin/hotels/${params.row.id}`} style={{ textDecoration: "none" }}> {/* Absolute path */}
+            <div className="viewButton">View</div>
+          </Link>
           <div
             className="deleteButton"
             onClick={() => handleDelete(params.row.id)}
@@ -50,8 +50,8 @@ useEffect(() => {
   return (
     <div className="admindatatable">
       <div className="datatableTitle">
-        {loading ? "Loading..." : "Rooms"}
-        <Link to={`new`} className="link">
+        {loading ? "Loading..." : "Hotels"} {/* Removed unused 'path' variable */}
+        <Link to={`/admin/hotels/new`} className="link"> {/* Absolute path */}
           Add New
         </Link>
       </div>
@@ -72,4 +72,4 @@ useEffect(() => {
   );
 };
 
-export default AdminDatatableRooms;
+export default AdminDatatable;

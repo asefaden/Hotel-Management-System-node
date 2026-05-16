@@ -12,11 +12,11 @@ import {
   faLocationDot,
 } from "@fortawesome/free-solid-svg-icons";
 import { useContext, useState } from "react";
-import useFetch from "./src/components/hooks/useFetch";
+import useFetch from "../components/hooks/useFetch"; // Corrected path
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { SearchContext } from "./src/context/SearchContext";
-import { UserContext } from "./src/context/userContext";
-import Reserve from "./src/components/Reserve";
+import { SearchContext } from "../context/SearchContext"; // Corrected path
+import { UserContext } from "../context/userContext"; // Corrected path
+import Reserve from "../components/Reserve"; // Corrected path
 
 export default function AdminViewHotel() {
     const location = useLocation();
@@ -38,9 +38,9 @@ export default function AdminViewHotel() {
       let newSlideNumber;
   
       if (direction === "l") {
-        newSlideNumber = slideNumber === 0 ? data.photos.length - 1 : slideNumber - 1;
+        newSlideNumber = slideNumber === 0 ? data.photos.length - 1 : slideNumber - 1; // Dynamic length
       } else {
-        newSlideNumber = slideNumber === data.photos.length - 1 ? 0 : slideNumber + 1;
+        newSlideNumber = slideNumber === data.photos.length - 1 ? 0 : slideNumber + 1; // Dynamic length
       }
   
       setSlideNumber(newSlideNumber);
@@ -52,32 +52,32 @@ export default function AdminViewHotel() {
     return (
       <div>
         <AdminNavbar />
-          {loading || !data ? (
+          {!(data && data.length > 0 )? (
             "loading"
           ) : (
             <div className="hotelContainer">
   
               <div className="hotelWrapper">
-                <h1 className="hotelTitle">{data.name}</h1>
+                <h1 className="hotelTitle">{data[0].name}</h1>
                 <div className="hotelAddress">
                   <FontAwesomeIcon icon={faLocationDot} />
-                  <span>{data.address}</span>
+                  <span>{data[0].address}</span>
                 </div>
                 <span className="hotelDistance">
-                  Excellent location – {data.distance} from center
+                  Excellent location – {data[0].distance} from center
                 </span>
                 <span className="hotelPriceHighlight">
-                  Book a stay over ₹{data.cheapestPrice} at this property and get a
+                  Book a stay over ₹{data[0].cheapestPrice} at this property and get a
                   free airport taxi
                 </span>
                 <div className="hotelImages">
-    {data.photos?.map((photo, i) => (
+    {data[0].photos.map((photo, i) => (
       <div className="hotelImgWrapper" key={i}>
         <div className="image-container">
         <img
           onClick={() => handleOpen(i)}
           src={photo}
-          alt=""
+          alt={`Hotel Image ${i}`}
           className="image"
         />
         </div>
@@ -88,17 +88,17 @@ export default function AdminViewHotel() {
   
                 <div className="hotelDetails">
                   <div className="hotelDetailsTexts">
-                    <h1 className="hotelTitle">{data.title}</h1>
-                    <p className="hotelDesc">{data.desc}</p>
+                    <h1 className="hotelTitle">{data[0].title}</h1>
+                    <p className="hotelDesc">{data[0].desc}</p>
                   </div>
                   <div className="hotelDetailsPrice">
                 <h1>Perfect for a 0-night stay!</h1> 
                     <span>
-                      Located in the real heart of {data.city}, this property has an
-                      excellent location score of {data.rating}!
+                      Located in the real heart of {data[0].city}, this property has an
+                      excellent location score of {data[0].rating}!
                     </span>
                     <h2>
-                      <b>₹{data.cheapestPrice}</b>
+                      <b>₹{data[0].cheapestPrice}</b>
                     </h2>
                     <button onClick={handleClick}>Add/Edit Rooms</button>
                   </div>

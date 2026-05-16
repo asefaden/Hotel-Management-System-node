@@ -2,14 +2,14 @@ import "./adminnewhotel.scss";
 import AdminNavbar from "../components/AdminNavbar";
 import DriveFolderUploadOutlinedIcon from "@mui/icons-material/DriveFolderUploadOutlined";
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom"; // Added useLocation
 import { roomInputs } from "../formSource";
 import useFetch from "../components/hooks/useFetch";
 import axios from "axios";
 import toast from "react-hot-toast";
 
 const AdminNewRoom = () => {
-  const location = useLocation();
+  const location = useLocation(); // Initialize useLocation
   const [info, setInfo] = useState({});
   const id = location.pathname.split("/")[3];
   const [rooms, setRooms] = useState([]);

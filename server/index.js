@@ -80,7 +80,7 @@ app.use((err, req, res, next) => {
     success: false,
     status: errorStatus,
     message: errorMessage,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : {}
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined // Only show stack in development
   });
 });
 

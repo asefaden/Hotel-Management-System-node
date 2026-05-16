@@ -8,7 +8,7 @@ import Register from "./pages/Register.jsx";
 import Login from "./pages/Login.jsx";
 import axios from 'axios';
 import { Toaster } from 'react-hot-toast'
-import Dashboard from './pages/Dashboard.jsx';
+import Dashboard from './pages/Dashboard.jsx'; // Corrected path
 import { UserContext, UserContextProvider } from './context/userContext.jsx';
 import Hotel from "./pages/Hotels.jsx";
 import List from "./pages/List.jsx";

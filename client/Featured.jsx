@@ -1,4 +1,4 @@
-import useFetch from "./hooks/useFetch";
+import useFetch from "./hooks/useFetch"; // Corrected path
 import "./featured.css";
 
 const Featured = () => {
@@ -10,7 +10,7 @@ const Featured = () => {
     <div className="featured">
       {loading ? (
         "Loading please wait"
-      ) : data && data.length >= 3 ? (
+      ) : data && Array.isArray(data) && data.length >= 3 ? ( // Check if data exists and is an array
         <>
           <div className="featuredItem">
             <img

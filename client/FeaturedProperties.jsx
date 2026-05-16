@@ -1,4 +1,4 @@
-import useFetch from "./hooks/useFetch";
+import useFetch from "./src/components/hooks/useFetch"; // Corrected path
 import "./featuredproperties.css";
 
 const FeaturedProperties = () => {
