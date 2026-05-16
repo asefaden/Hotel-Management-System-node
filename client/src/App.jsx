@@ -26,7 +26,8 @@ import { Navigate } from "react-router-dom";
 import AdminViewHotel from "./pages/AdminViewHotel.jsx";
 import AdminListRooms from "./pages/AdminListRooms.jsx";
 
-axios.defaults.baseURL = "http://localhost:8000";
+axios.defaults.baseURL = "https://hotel12.app.aletcloud.com/";
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
 axios.defaults.withCredentials = true
 
 function App() {
