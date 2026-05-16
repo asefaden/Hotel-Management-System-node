@@ -6,7 +6,7 @@ const test = (req, res) => {
   res.json('test is working');
 };
 //Register Endpoint
-const registerUser = async (req, res) => {
+const registerUser = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
@@ -45,14 +45,13 @@ const registerUser = async (req, res) => {
     await pool.execute('INSERT INTO users (name, email, password) VALUES (?, ?, ?)', [name, email, hashedPassword]);
 
     return res.json({ success: true, message: 'User registered successfully' });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ success: false, message: 'User registration failed' });
+  } catch (err) {
+    next(err);
   }
 };
 
 //Login Endpoint
-const loginUser = async (req, res) => {
+const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -75,17 +74,18 @@ const loginUser = async (req, res) => {
       });
     }
 
-    jwt.sign({ email: user.email, id: user.id, name: user.name }, process.env.JWT_SECRET, {}, (err, token) => {
+    const { password: userPassword, ...otherDetails } = user;
+
+    jwt.sign({ email: user.email, id: user.id, name: user.name, isAdmin: !!user.isAdmin }, process.env.JWT_SECRET, { expiresIn: '7d' }, (err, token) => {
       if (err) {
         console.log(err);
         return res.status(500).json({ success: false, message: 'Login failed' });
       }
 
-      res.cookie('token', token).json(user);
+      res.cookie('token', token, { httpOnly: true }).json({ ...otherDetails });
     });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ success: false, message: 'Login failed' });
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -93,7 +93,7 @@ const getProfile = (req, res) => {
 const {token} = req.cookies
 if(token){
   jwt.verify(token, process.env.JWT_SECRET, {}, (err, user) => {
-    if(err) throw err;
+    if(err) return res.json(null);
     res.json(user)
   })
 } else {
@@ -107,65 +107,46 @@ const logout = (req, res) => {
 
 const createHotel = async (req, res, next) => {
   try {
-    const {
-      name,
-      type,
-      city,
-      address,
-      distance,
-      photos,
-      title,
-      desc,
-      rating,
-      cheapestPrice,
-      featured
-    } = req.body;
+    const { name, type, city, address, distance, photos, title, desc, rating, cheapestPrice, featured } = req.body;
 
-    try {
-      // Convert featured to 0 or 1
-      const featuredValue = featured === 'true' ? 1 : 0;
+    // Convert featured to 0 or 1
+    const featuredValue = featured === 'true' || featured === true ? 1 : 0;
 
-      // Check for undefined values and convert photos to JSON
-      const params = [
-        name || null,
-        type || null,
-        city || null,
-        address || null,
-        distance || null,
-        photos ? JSON.stringify(photos) : null,
-        title || null,
-        desc || null,
-        rating || null,
-        cheapestPrice || null,
-        featuredValue // Use the converted value
-      ];
+    // Check for undefined values and convert photos to JSON
+    const params = [
+      name || null,
+      type || null,
+      city || null,
+      address || null,
+      distance || null,
+      photos ? JSON.stringify(photos) : null,
+      title || null,
+      desc || null,
+      rating || null,
+      cheapestPrice || null,
+      featuredValue
+    ];
 
-      // Insert the new hotel into the 'hotels' table
-      const [hotelResult] = await pool.execute(
-        'INSERT INTO hotels (name, type, city, address, distance, photos, title, `desc`, rating, cheapestPrice, featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        params
-      );
+    await pool.execute(
+      'INSERT INTO hotels (name, type, city, address, distance, photos, title, `desc`, rating, cheapestPrice, featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      params
+    );
 
-      res.status(200).json({ success: true, message: 'Hotel added successfully.' });
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ success: false, message: 'Failed to add hotel.' });
-    }
-  } catch (error) {
-    console.log(error);
-    res.status(400).json({ success: false, message: 'Invalid request.' });
+    res.status(200).json({ success: true, message: 'Hotel added successfully.' });
+  } catch (err) {
+    next(err);
   }
 };
 
 
 
 const updateHotel = async (req, res, next) => {
-  const { name, location, cheapestPrice, type } = req.body;
+  const { name, city, address, cheapestPrice, type } = req.body;
   const hotelId = req.params.id;
   try {
     await pool.query(
-      'UPDATE hotels SET name = ?, location = ?, cheapestPrice = ?, type = ? WHERE id = ?',
-      [name, location, cheapestPrice, type, hotelId]
+      'UPDATE hotels SET name = ?, city = ?, address = ?, cheapestPrice = ?, type = ? WHERE id = ?',
+      [name, city, address, cheapestPrice, type, hotelId]
     );
     res.status(200).json({ message: 'Hotel updated successfully' });
   } catch (err) {
@@ -199,7 +180,7 @@ const getHotel = async (req, res, next) => {
   const hotelId = req.params.id;
   try {
     const [hotel] = await pool.query('SELECT * FROM hotels WHERE id = ?', [hotelId]);
-    res.status(200).json(hotel);
+    res.status(200).json(hotel[0] || null);
   } catch (err) {
     next(err);
   }
@@ -207,25 +188,28 @@ const getHotel = async (req, res, next) => {
 
 const getHotels = async (req, res, next) => {
   const { min, max, city, limit, ...others } = req.query;
-  let whereClause = '1 = 1'; // A default condition that always evaluates to true
+  let query = 'SELECT * FROM hotels WHERE 1 = 1';
+  const queryParams = [];
 
   if (city) {
-    whereClause += ` AND city = '${city}'`;
+    query += ' AND city = ?';
+    queryParams.push(city);
   }
 
   if (min) {
-    whereClause += ` AND cheapestPrice >= ${min}`;
+    query += ' AND cheapestPrice >= ?';
+    queryParams.push(parseInt(min));
   }
 
   if (max) {
-    whereClause += ` AND cheapestPrice <= ${max}`;
+    query += ' AND cheapestPrice <= ?';
+    queryParams.push(parseInt(max));
   }
 
-  try {
-    const [hotels, fields] = await pool.query(
-      `SELECT * FROM hotels WHERE ${whereClause} LIMIT ${limit || 100}`
-    );
+  query += ` LIMIT ${parseInt(limit) || 100}`;
 
+  try {
+    const [hotels] = await pool.query(query, queryParams);
     res.status(200).json(hotels);
   } catch (err) {
     next(err);
@@ -235,8 +219,9 @@ const getHotels = async (req, res, next) => {
 
 
 const countByCity = async (req, res, next) => {
-  const cities = req.query.cities.split(',');
   try {
+    const cities = req.query.cities ? req.query.cities.split(',') : [];
+    if (cities.length === 0) return res.status(200).json([]);
     const [results] = await pool.query(
       'SELECT city, COUNT(*) AS count FROM hotels WHERE city IN (?) GROUP BY city',
       [cities]
@@ -249,21 +234,17 @@ const countByCity = async (req, res, next) => {
 
 const countByType = async (req, res, next) => {
   try {
-    const [hotelCountRows, hotelCountFields] = await pool.query('SELECT COUNT(*) AS count FROM hotels WHERE type = "hotel"');
-    const [apartmentCountRows, apartmentCountFields] = await pool.query('SELECT COUNT(*) AS count FROM hotels WHERE type = "apartment"');
-    const [resortCountRows, resortCountFields] = await pool.query('SELECT COUNT(*) AS count FROM hotels WHERE type = "resort"');
-    const [villaCountRows, villaCountFields] = await pool.query('SELECT COUNT(*) AS count FROM hotels WHERE type = "villa"');  
-    const [cabinCountRows, cabinCountFields] = await pool.query('SELECT COUNT(*) AS count FROM hotels WHERE type = "cabin"');
+    const [rows] = await pool.query(
+      'SELECT type, COUNT(*) AS count FROM hotels GROUP BY type'
+    );
+    
+    const types = ['hotel', 'apartment', 'resort', 'villa', 'cabin'];
+    const result = types.map(type => {
+      const row = rows.find(r => r.type === type);
+      return { type: type + 's', count: row ? row.count : 0 };
+    });
 
-    const counts = [
-      { type: 'hotel', count: hotelCountRows[0].count },
-      { type: 'apartments', count: apartmentCountRows[0].count },
-      { type: 'resorts', count: resortCountRows[0].count },
-      { type: 'villas', count: villaCountRows[0].count },
-      { type: 'cabins', count: cabinCountRows[0].count },
-    ];
-
-    res.status(200).json(counts);
+    res.status(200).json(result);
   } catch (err) {
     next(err);
   }
@@ -348,8 +329,8 @@ const updateRoomAvailability = async (req, res, next) => {
     await Promise.all(timestamps.map(async (timestamp) => {
       const date = new Date(timestamp);
 
-      // Assuming you have the userId from the token
-      const userId = req.body.userId; // Adjust this based on your actual user data retrieval
+      // Use the userId from the verified token
+      const userId = req.user.id;
 
       // Insert into the unavailableDates table
       await pool.query('INSERT INTO unavailableDates (roomNumber_id, date, user_id) VALUES (?, ?, ?)', [roomNumberId, date, userId]);
@@ -368,12 +349,12 @@ const updateRoomAvailability = async (req, res, next) => {
 
 const updateRoom = async (req, res, next) => {
   const roomId = req.params.id;
-  const updatedRoom = req.body;
+  const { title, price, maxPeople, description } = req.body;
 
   try {
     await pool.query(
-      'UPDATE rooms SET name = ?, type = ?, capacity = ?, price = ?, description = ? WHERE id = ?',
-      [updatedRoom.name, updatedRoom.type, updatedRoom.capacity, updatedRoom.price, updatedRoom.description, roomId]
+      'UPDATE rooms SET title = ?, price = ?, maxPeople = ?, description = ? WHERE id = ?',
+      [title, price, maxPeople, description, roomId]
     );
 
     const [selectedRoom] = await pool.query('SELECT * FROM rooms WHERE id = ?', [roomId]);
@@ -407,14 +388,14 @@ const deleteRoom = async (req, res, next) => {
 const getRoom = async (req, res, next) => {
   const roomId = req.params.id;
   try {
-    const [selectedRoom] = await pool.query('SELECT rooms.id ,rooms.title, rooms.price, rooms.maxPeople, rooms.description FROM rooms JOIN hotels ON rooms.hotel_id = hotels.id WHERE rooms.hotel_id = (?)', [roomId]);
-    res.status(200).json(selectedRoom);
+    const [selectedRoom] = await pool.query('SELECT * FROM rooms WHERE id = ?', [roomId]);
+    res.status(200).json(selectedRoom[0]);
   } catch (err) {
     next(err);
   }
 };
 
-const adminLogin = async (req, res) => {
+const adminLogin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -437,21 +418,22 @@ const adminLogin = async (req, res) => {
       });
     }
 
-    jwt.sign({ email: user.email, id: user.id, name: user.name }, process.env.JWT_SECRET, {}, (err, token) => {
+    const { password: adminPassword, ...otherDetails } = user;
+
+    jwt.sign({ email: user.email, id: user.id, name: user.name, isAdmin: true }, process.env.JWT_SECRET, { expiresIn: '1d' }, (err, token) => {
       if (err) {
         console.log(err);
         return res.status(500).json({ success: false, message: 'Login failed' });
       }
 
-      res.cookie('token', token).json(user);
+      res.cookie('token', token, { httpOnly: true }).json({ ...otherDetails });
     });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ success: false, message: 'Login failed' });
+  } catch (err) {
+    next(err);
   }
 }; 
 
-const adminRegister = async (req, res) => {
+const adminRegister = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
@@ -490,17 +472,16 @@ const adminRegister = async (req, res) => {
     await pool.execute('INSERT INTO admin_users (name, email, password) VALUES (?, ?, ?)', [name, email, hashedPassword]);
 
     return res.json({ success: true, message: 'User registered successfully' });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ success: false, message: 'User registration failed' });
+  } catch (err) {
+    next(err);
   }
 };
 
-const reserved = async (req, res, next) => { 
+const reserved = async (req, res, next) => {
   try {
     const userId = req.params.id;
 
-    const [rows, fields] = await pool.execute(`
+    const [rows] = await pool.execute(`
     SELECT
     hotels.name AS hotel_name,
     hotels.title AS hotel_title,
@@ -528,34 +509,30 @@ JOIN hotels ON rooms.hotel_id = hotels.id
 WHERE users.id = (?);
 `, [userId]);
 
-    // Check if there are reservations for the user
-    if (rows.length === 0) {
-      return res.status(200).json({ message: 'No reservations found for the user.' });
-    }
-
     res.status(200).json(rows);
   } catch (err) {
     next(err);
   }
 };
 
-const delReserved = async (req, res) => {
+const delReserved = async (req, res, next) => {
   try {
     const { unavailId } = req.body;
+    const userId = req.user.id;
 
-    // Check if user exists
-    const [rows, fields] = await pool.execute('DELETE FROM unavailableDates WHERE id = ?', [unavailId]);
+    // Ensure user can only delete their own reservation
+    const [rows] = await pool.execute('DELETE FROM unavailableDates WHERE id = ? AND user_id = ?', [unavailId, userId]);
 
-    if (!(rows.affectedRows > 0)) {
-      return res.json({
-        error: 'Cancellation Failed',
+    if (rows.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Cancellation Failed: Reservation not found or unauthorized',
       });
     }
 
     return res.json({ success: true, message: 'Successfully Canceled' });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, message: 'Cancellation Failed' });
+  } catch (err) {
+    next(err);
   }
 };
 

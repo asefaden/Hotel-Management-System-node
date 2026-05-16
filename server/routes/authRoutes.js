@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const cors = require('cors');
 const { test,
     registerUser,
     loginUser,
@@ -24,28 +23,22 @@ const { test,
   reserved,
 delReserved,
 getRoomByHotel} = require('../controllers/authController')
-    const { verifyAdmin } = require('../utils/verifyToken');
+const { verifyAdmin, verifyToken, verifyUser } = require('../utils/verifyToken');
 
 //middleware
-router.use(
-    cors({
-        credentials: true,
-        origin: 'http://localhost:5173'
-    })
-)
 
 router.get('/', test)
 router.post('/register', registerUser)
 router.post('/login', loginUser)
 router.get('/profile', getProfile)
 router.get('/logout', logout)
-router.post('/hotels/new', createHotel);
+router.post('/hotels/new', verifyAdmin, createHotel);
   
   // UPDATE
   router.put('/hotels/:id', verifyAdmin, updateHotel);
   
   // DELETE
-  router.delete('/hotels/:id', deleteHotel);
+  router.delete('/hotels/:id', verifyAdmin, deleteHotel);
   
   // GET
   router.get('/hotels/find/:id', getHotel);
@@ -55,13 +48,13 @@ router.post('/hotels/new', createHotel);
   router.get('/hotels/countByCity', countByCity);
   router.get('/hotels/countByType', countByType);
   router.get('/hotels/room/:id', getHotelRooms);
-  router.post("/room/:hotelid", createRoom);
+  router.post("/room/:hotelid", verifyAdmin, createRoom);
 
 //UPDATE
-router.put("/room/availability/:id/:roomNumber", updateRoomAvailability);
+router.put("/room/availability/:id/:roomNumber", verifyToken, updateRoomAvailability);
 router.put("/room/:id", verifyAdmin, updateRoom);
 //DELETE
-router.delete("/room/:id", deleteRoom);
+router.delete("/room/:id", verifyAdmin, deleteRoom);
 //GET
 
 router.get("/room/:id", getRoom);
@@ -69,7 +62,7 @@ router.get("/room/:id", getRoom);
 
 router.post("/admin/login", adminLogin);
 router.post("/admin/register", adminRegister);
-router.get('/reserved/:id', reserved);
-router.post('/delreserve', delReserved);
+router.get('/reserved/:id', verifyUser, reserved);
+router.post('/delreserve', verifyToken, delReserved);
 router.get('/room/:id/:hotelid', getRoomByHotel)
 module.exports = router

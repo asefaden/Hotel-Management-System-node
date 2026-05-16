@@ -16,6 +16,11 @@ requiredEnv.forEach((name) => {
   }
 });
 
+if (!process.env.JWT_SECRET) {
+  console.warn('HINT: JWT_SECRET is missing in .env. Using a fallback for local testing.');
+  process.env.JWT_SECRET = 'hotel_management_fallback_secret_2024';
+}
+
 // Create a connection pool to your MySQL database
 const pool = mysql.createPool({
   host: process.env.MYSQL_HOST,
@@ -33,7 +38,7 @@ app.use(cookieParser());
 app.use(express.urlencoded({extended: false}))
 
 const allowedOrigin = [
-  'https://hotel.app.aletcloud.com',
+  'https://hotel12.app.aletcloud.com',
   'http://localhost:5173'
 ];
 
@@ -66,5 +71,17 @@ module.exports = {
 
 // Use 'pool' to handle MySQL queries in your routes
 app.use('/api', require('./routes/authRoutes'));
+
+// Global Error Handling Middleware
+app.use((err, req, res, next) => {
+  const errorStatus = err.status || 500;
+  const errorMessage = err.message || "Something went wrong!";
+  return res.status(errorStatus).json({
+    success: false,
+    status: errorStatus,
+    message: errorMessage,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : {}
+  });
+});
 
 app.listen(port, () => console.log('Server is running on port', port));

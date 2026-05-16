@@ -5,6 +5,7 @@ export const UserContext = createContext({});
 
 export function UserContextProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [ready, setReady] = useState(false);
 
   const logout = () => {
     // Perform any additional logout actions, e.g., send a request to your server to invalidate the session
@@ -23,12 +24,15 @@ export function UserContextProvider({ children }) {
     if (!user) {
       axios.get('/profile').then(({ data }) => {
         setUser(data);
+        setReady(true);
+      }).catch(() => {
+        setReady(true);
       });
     }
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUser, logout }}>
+    <UserContext.Provider value={{ user, setUser, logout, ready }}>
       {children}
     </UserContext.Provider>
   );

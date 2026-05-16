@@ -23,8 +23,9 @@ const AdminNewHotel = () => {
           const data = new FormData();
           data.append("file", file);
           data.append("upload_preset", "upload");
+          // Note: Ensure VITE_UPLOAD_URL is set in your cloud env (e.g., Cloudinary URL)
           const uploadRes = await axios.post(
-            "",
+            import.meta.env.VITE_UPLOAD_URL || "https://api.cloudinary.com/v1_1/your_cloud_name/image/upload",
             data
           );
   

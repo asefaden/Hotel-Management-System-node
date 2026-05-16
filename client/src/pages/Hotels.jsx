@@ -72,7 +72,7 @@ const Hotel = () => {
     <div>
       <Navbar />
       <Header type="list" />
-        {!(data && data.length > 0 )? (
+        {loading || !data ? (
           "loading"
         ) : (
           <div className="hotelContainer">
@@ -90,7 +90,7 @@ const Hotel = () => {
     />
     <div className="sliderWrapper">
       <img
-        src={data[0].photos[slideNumber % data[0].photos.length]}
+        src={data.photos[slideNumber % data.photos.length]}
         alt=""
         className="sliderImg"
       />
@@ -105,26 +105,26 @@ const Hotel = () => {
 
             <div className="hotelWrapper">
               <button className="bookNow" onClick={handleClick}>Reserve or Book Now!</button>
-              <h1 className="hotelTitle">{data[0].name}</h1>
+              <h1 className="hotelTitle">{data.name}</h1>
               <div className="hotelAddress">
                 <FontAwesomeIcon icon={faLocationDot} />
-                <span>{data[0].address}</span>
+                <span>{data.address}</span>
               </div>
               <span className="hotelDistance">
-                Excellent location – {data[0].distance} from center
+                Excellent location – {data.distance} from center
               </span>
               <span className="hotelPriceHighlight">
-                Book a stay over ₹{data[0].cheapestPrice} at this property and get a
+                Book a stay over ₹{data.cheapestPrice} at this property and get a
                 free airport taxi
               </span>
               <div className="hotelImages">
-  {data[0].photos.map((photo, i) => (
+  {data.photos?.map((photo, i) => (
     <div className="hotelImgWrapper" key={i}>
       <div className="image-container">
       <img
         onClick={() => handleOpen(i)}
         src={photo}
-        alt={`Hotel Image ${i}`}
+        alt=""
         className="image"
       />
       </div>
@@ -135,20 +135,20 @@ const Hotel = () => {
 
               <div className="hotelDetails">
                 <div className="hotelDetailsTexts">
-                  <h1 className="hotelTitle">{data[0].title}</h1>
-                  <p className="hotelDesc">{data[0].desc}</p>
+                  <h1 className="hotelTitle">{data.title}</h1>
+                  <p className="hotelDesc">{data.desc}</p>
                 </div>
                 <div className="hotelDetailsPrice">
               <h1>Perfect for a {days}-night stay!</h1> 
                   <span>
-                    Located in the real heart of {data[0].city}, this property has an
-                    excellent location score of {data[0].rating}!
+                    Located in the real heart of {data.city}, this property has an
+                    excellent location score of {data.rating}!
                   </span>
                   <h2>
                   {days==0? (
-          <b>₹{data[0].cheapestPrice* options.room/2}</b>
+          <b>₹{data.cheapestPrice* options.room/2}</b>
         ) : (
-                    <b>₹{days * data[0].cheapestPrice * options.room}</b>)} ({days}{" "}
+                    <b>₹{days * data.cheapestPrice * options.room}</b>)} ({days}{" "}
                     nights)
                   </h2>
                   <button onClick={handleClick}>Reserve or Book Now!</button>

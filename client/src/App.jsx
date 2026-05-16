@@ -26,15 +26,28 @@ import { Navigate } from "react-router-dom";
 import AdminViewHotel from "./pages/AdminViewHotel.jsx";
 import AdminListRooms from "./pages/AdminListRooms.jsx";
 
-axios.defaults.baseURL = "https://hotel12.app.aletcloud.com/";
-axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'https://hotel12.app.aletcloud.com/api';
 axios.defaults.withCredentials = true
 
 function App() {
+  const { user, ready } = useContext(UserContext);
+
+  const ProtectedRoute = ({ children }) => {
+    if (!ready) {
+      return <div>Loading...</div>;
+    }
+
+    if (!user) {
+      return <Navigate to="/admin/login" />;
+    }
+
+    return children;
+  };
+
   return (
     <>
     <Toaster position ='bottom-right' toastOptions={{duration: 2000}} />
-    <BrowserRouter>
+    <BrowserRouter basename="/front">
       <Routes>
         <Route path="/" element={<Home/>}/>
         <Route path="/register" element={<Register />} />
@@ -48,39 +61,41 @@ function App() {
             <Route
               index
               element={
-                <AdminHome />
+                <ProtectedRoute><AdminHome /></ProtectedRoute>
               }
             />
           <Route path="login" element={<AdminLogin />} />
-            <Route
-              index
-              element={
-                <AdminHome />
-              }
-            />
             <Route path="hotels">
               <Route
                 index
                 element={
-                    <AdminList columns={hotelColumns} />
+                    <ProtectedRoute>
+                      <AdminList columns={hotelColumns} />
+                    </ProtectedRoute>
                 }
               />
               <Route path=":id">
               <Route
               index
                 element={
-                    <AdminViewHotel />
+                    <ProtectedRoute>
+                      <AdminViewHotel />
+                    </ProtectedRoute>
                 }
               />
               <Route path="rooms">
-               <Route index element={
-                  <AdminListRooms columns={roomColumns} />
+               <Route index element={ 
+                  <ProtectedRoute>
+                    <AdminListRooms columns={roomColumns} />
+                  </ProtectedRoute>
                 }
               />
              <Route
                 path="new"
                 element={
-                    <AdminNewRoom />
+                    <ProtectedRoute>
+                      <AdminNewRoom />
+                    </ProtectedRoute>
                 }
               />
               </Route>
@@ -88,7 +103,9 @@ function App() {
               <Route
                 path="new"
                 element={
-                    <AdminNewHotel  />
+                    <ProtectedRoute>
+                      <AdminNewHotel  />
+                    </ProtectedRoute>
                 }
               />
            
